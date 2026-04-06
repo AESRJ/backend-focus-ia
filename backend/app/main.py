@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from .models.user import User, Base
 from .schemas.user import UserRead, UserRegister
 from .core.config import settings
-from app.main import app
+
 
 DATABASE_URL = settings.DATABASE_URL.replace("mssql+pyodbc://", "mssql+aioodbc://")
 engine = create_async_engine(DATABASE_URL)
