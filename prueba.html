@@ -221,7 +221,7 @@
         };
 
         try {
-       const res = await fetch('backend-focus-ia-production.up.railway.app', {
+       const res = await fetch('https://backend-focus-ia-production.up.railway.app/auth/register', {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify(data),
