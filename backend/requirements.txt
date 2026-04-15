@@ -4,8 +4,8 @@ gunicorn
 fastapi-users==15.0.5
 fastapi-users-db-sqlalchemy==7.0.0
 sqlalchemy==2.0.48
-aioodbc
-pyodbc
+aiomysql==0.2.0
+PyMySQL==1.1.1
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart==0.0.22
