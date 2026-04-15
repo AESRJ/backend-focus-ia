@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_users import FastAPIUsers, BaseUserManager, IntegerIDMixin
@@ -7,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from .models.user import User, Base
 from .schemas.user import UserRead, UserRegister, UserUpdate
 from .core.config import settings
- 
+
 # --- Base de datos ASYNC ---
 DATABASE_URL = settings.DATABASE_URL
- 
+
 engine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -19,39 +20,46 @@ engine = create_async_engine(
     max_overflow=10,
 )
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
- 
+
 async def get_async_session():
     async with AsyncSessionLocal() as session:
         yield session
- 
+
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, User)
- 
+
 # --- UserManager ---
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = settings.JWT_SECRET
     verification_token_secret = settings.JWT_SECRET
- 
+
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
- 
+
 # --- Auth backend ---
 bearer_transport = BearerTransport(tokenUrl="/auth/jwt/login")
- 
+
 def get_jwt_strategy() -> JWTStrategy:
     return JWTStrategy(secret=settings.JWT_SECRET, lifetime_seconds=3600)
- 
+
 auth_backend = AuthenticationBackend(
     name="jwt",
     transport=bearer_transport,
     get_strategy=get_jwt_strategy,
 )
- 
+
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])
- 
+
+# --- Crear tablas al iniciar ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
 # --- App ---
-app = FastAPI(title="Focus IA - Backend")
- 
+app = FastAPI(title="Focus IA - Backend", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -59,28 +67,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
- 
+
 # Registro
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserRegister),
     prefix="/auth",
     tags=["auth"]
 )
- 
+
 # Login JWT
 app.include_router(
     fastapi_users.get_auth_router(auth_backend),
     prefix="/auth/jwt",
     tags=["auth"]
 )
- 
-# ✅ GET /users/me y PATCH /users/me
+
+# GET /users/me y PATCH /users/me
 app.include_router(
     fastapi_users.get_users_router(UserRead, UserUpdate),
     prefix="/users",
     tags=["users"]
 )
- 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
