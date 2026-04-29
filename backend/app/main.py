@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from .auth import auth_backend, fastapi_users
 from .db import engine
 from .models.user import User, Base  # noqa: F401
+from .models.perfil_estudiante import PerfilEstudiante  # noqa: F401
 from .schemas.user import UserRead, UserRegister, UserUpdate
+from .routes.preferences import router as preferences_router
+from .routes.profile import router as profile_router
 
 
 # --- Crear tablas al iniciar ---
@@ -47,6 +50,12 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
+
+# Preferencias del estudiante (mode, duration)
+app.include_router(preferences_router)
+
+# Perfil de restricción del estudiante (GET/PATCH /profile/restriction)
+app.include_router(profile_router)
 
 
 if __name__ == "__main__":
