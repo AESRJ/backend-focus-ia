@@ -6,8 +6,10 @@ class UserRegister(schemas.BaseUserCreate):
  
 class UserRead(schemas.BaseUser[int]):
     name: str
- 
+    username: str | None = None
+
 class UserUpdate(schemas.BaseUserUpdate):
     name: str | None = None
     email: EmailStr | None = None
+    username: str | None = Field(default=None, min_length=3, max_length=50, pattern=r"^[a-zA-ZñÑ0-9_]+$")
  
