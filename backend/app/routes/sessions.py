@@ -17,7 +17,15 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
 def _to_out(s: Sesion) -> SessionOut:
-    return SessionOut(id=s.id, start_time=s.fecha_inicio, end_time=s.fecha_fin)
+    # Fallback a 'intermedio' para sesiones legacy en BD donde la columna
+    # quedo NULL (la tabla se creo cuando aun era nullable). El modelo actual
+    # ya es NOT NULL, asi que solo cubre datos viejos.
+    return SessionOut(
+        id=s.id,
+        start_time=s.fecha_inicio,
+        end_time=s.fecha_fin,
+        nivel_restriccion_sesion=s.nivel_restriccion_sesion or "intermedio",
+    )
 
 
 @router.get("/active", response_model=Optional[SessionOut])
@@ -102,9 +110,10 @@ async def start_session(
         return _to_out(activa)
 
     perfil = await get_or_create_profile(session, user.id)
+    # Si el perfil legacy tiene nivel NULL, caemos al default oficial.
     sesion = Sesion(
         estudiante_id=user.id,
-        nivel_restriccion_sesion=perfil.nivel_restriccion,
+        nivel_restriccion_sesion=perfil.nivel_restriccion or "intermedio",
     )
     session.add(sesion)
     await session.commit()

@@ -99,8 +99,9 @@ async def create_detection(
         distractor_id=distractor.id,
         nombre_detectado=payload.nombre_detectado,
         categoria=payload.categoria,
-        # Snapshot del nivel activo en el momento de la detección
-        nivel_restriccion_activo=sesion.nivel_restriccion_sesion,
+        # Snapshot del nivel activo en el momento de la detección.
+        # Fallback a 'intermedio' para cubrir sesiones legacy con nivel NULL.
+        nivel_restriccion_activo=sesion.nivel_restriccion_sesion or "intermedio",
         timestamp_deteccion=timestamp_str,
     )
     session.add(registro)
