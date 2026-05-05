@@ -42,7 +42,18 @@ async def get_active_session(
     sesion = result.scalars().first()
     if sesion is None:
         return None
-    return _to_out(sesion)
+    # Devolver el nivel ACTUAL del perfil (no el snapshot) para que los cambios
+    # de preferencias se reflejen en vivo en la extension sin reiniciar sesion.
+    # El snapshot en Sesion.nivel_restriccion_sesion se mantiene para historicos
+    # y para los registros de deteccion (RegistroDeteccion.nivel_restriccion_activo).
+    perfil = await get_or_create_profile(session, user.id)
+    nivel_vivo = perfil.nivel_restriccion or sesion.nivel_restriccion_sesion or "intermedio"
+    return SessionOut(
+        id=sesion.id,
+        start_time=sesion.fecha_inicio,
+        end_time=sesion.fecha_fin,
+        nivel_restriccion_sesion=nivel_vivo,
+    )
 
 
 @router.get("/history", response_model=List[SessionHistoryItem])

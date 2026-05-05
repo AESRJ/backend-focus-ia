@@ -1,11 +1,13 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from ..auth import current_active_user
 from ..db import get_async_session
+from ..models.sesion import Sesion
 from ..models.user import User
 from ..schemas.preferences import PreferenceIn, PreferenceOut
 from ..services.profile import VALID_LEVELS, get_or_create_profile
@@ -46,6 +48,19 @@ async def save_preferences(
         perfil.nivel_restriccion = payload.mode
         perfil.updated_at = datetime.utcnow()
         session.add(perfil)
+        # Si hay una sesion activa, sincronizar su snapshot para que las
+        # detecciones registradas a partir de ahora usen el nuevo nivel.
+        activa = (
+            await session.execute(
+                select(Sesion).where(
+                    Sesion.estudiante_id == user.id,
+                    Sesion.estado == "activa",
+                )
+            )
+        ).scalars().first()
+        if activa is not None:
+            activa.nivel_restriccion_sesion = payload.mode
+            session.add(activa)
     else:
         # Modo no es uno de los niveles oficiales; lo guardamos en JSON
         # para no perder configuraciones futuras como "tranquilo", "intenso", etc.
