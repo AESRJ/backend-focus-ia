@@ -11,6 +11,7 @@ class SessionOut(BaseModel):
     id: int
     start_time: datetime
     end_time: Optional[datetime] = None
+    nivel_restriccion_sesion: Optional[Literal["bajo", "intermedio", "alto"]] = None
 
     model_config = {"from_attributes": True}
 
