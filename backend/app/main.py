@@ -16,6 +16,7 @@ from .routes.preferences import router as preferences_router
 from .routes.profile import router as profile_router
 from .routes.sessions import router as sessions_router
 from .routes.tdah import router as tdah_router
+from .routes.iq import router as iq_router
 
 
 # --- Crear tablas al iniciar ---
@@ -75,6 +76,9 @@ app.include_router(profile_router)
 
 # Resultados del cuestionario TDAH (POST/GET /tdah/resultados)
 app.include_router(tdah_router)
+
+# Resultados del test IQ (POST/GET /iq/resultados) — ajusta preferencias auto
+app.include_router(iq_router)
 
 
 if __name__ == "__main__":
