@@ -15,6 +15,7 @@ from .routes.distractors import router as distractors_router
 from .routes.preferences import router as preferences_router
 from .routes.profile import router as profile_router
 from .routes.sessions import router as sessions_router
+from .routes.tdah import router as tdah_router
 
 
 # --- Crear tablas al iniciar ---
@@ -71,6 +72,9 @@ app.include_router(detections_router)
 
 # Perfil de restricción del estudiante (GET/PATCH /profile/restriction)
 app.include_router(profile_router)
+
+# Resultados del cuestionario TDAH (POST/GET /tdah/resultados)
+app.include_router(tdah_router)
 
 
 if __name__ == "__main__":
